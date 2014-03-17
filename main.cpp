@@ -10,67 +10,89 @@
 /* Constants */
 #define UNDEFINED -1
 
-/* Output */
-/*  número de grupos máximos de pessoas que partilham informação; */
-unsigned int groups = 0;
-/* Uma linha com o tamanho do maior grupo máximo de pessoas que partilham informação; */
-unsigned int biggest = 0;
-/* número de grupos máximos de pessoas que partilham informação apenas dentro do grupo; */
-unsigned int own_group_only = 0;
-
 class Vertex {
     public:
-        Vertex() : id(0), d(UNDEFINED), low(UNDEFINED) {}
-        Vertex(unsigned int _id) : id(_id), d(UNDEFINED), low(UNDEFINED) {}
-        Vertex(unsigned int _id, unsigned int _d, unsigned int _low) :
+        Vertex() : id(0), d(UNDEFINED), low(UNDEFINED), onStack(false) {}
+        Vertex( int _id) : id(_id), d(UNDEFINED), low(UNDEFINED), onStack(false) {}
+        Vertex( int _id,  int _d,  int _low) :
             id(_id), d(_d), low(_low), onStack(false) {}
         virtual ~Vertex() {}
 
-        unsigned int Id() const { return id; }
-        unsigned int D() const { return d; }
-        unsigned int Low() const { return low; }
-        bool OnStack() const { return onStack; }
-        std::list<Vertex*> Adjacents() const { return adjacents; }
+        int Id() { return id; }
+        int D() { return d; }
+        int Low() { return low; }
+        bool OnStack() { return onStack; }
+        std::list<Vertex*> Adjacents() { return adjacents; }
 
-        void setId(unsigned int _id) { id = _id; }
-        void setD(unsigned int _d) { d = _d; }
-        void setLow(unsigned int _low) { low = _low; }
+        void setId( int _id) { id = _id; }
+        void setD( int _d) { d = _d; }
+        void setLow( int _low) { low = _low; }
         void setOnStack(bool b) { onStack = b; }
 
+        void addAdjacent(Vertex* v) { adjacents.push_back(v); }
+
     private:
-        unsigned int id;
-        unsigned int d;
-        unsigned int low;
+        int id;
+        int d;
+        int low;
         // To test if this vertex was already added to the stack
         bool onStack;
         //this will work as an adjacency list
         std::list<Vertex*> adjacents;
 };
 
-void visit(Vertex *v, std::stack<Vertex*> *s, unsigned int *visited);
+/* Output */
+/*  número de grupos máximos de pessoas que partilham informação; */
+int groups = 0;
+/* Uma linha com o tamanho do maior grupo máximo de pessoas que partilham informação; */
+unsigned int biggest = 0;
+/* número de grupos máximos de pessoas que partilham informação apenas dentro do grupo; */
+int own_group_only = 0;
+/* Groups of SCCs */
+std::vector<std::vector<Vertex*> > sccs;
+
+void visit(Vertex *v, std::stack<Vertex*> *s, int *visited);
 
 //void SCC_Tarjan(std::vector<std::list<Vertex*> *graph)
-void SCC_Tarjan(std::vector<Vertex*> graph)
+void SCC_Tarjan(std::vector<Vertex*> *graph)
 {
     //The counter for the amount of vertices visited
-    unsigned int visited = 0;
+    int visited = 0;
+    std::vector<Vertex*>::iterator it;
     // The stack needed by the algorithm
     std::stack<Vertex*> L;
 
-    for(Vertex* v : graph) { // corrigir
-        if(v->D() == UNDEFINED) {
-            visit(v, &L, &visited);
+    //for(Vertex* v : *graph) { // corrigir
+    printf("size do grafo: %u\n", graph->size());
+    for(it = graph->begin(); it != graph->end(); ++it) {
+        int i = (*it)->D();
+        /* if((*it)->D() == UNDEFINED) { */
+        if(i == UNDEFINED) {
+            printf("i = %d\n", i);
+            printf("id = %d\n", (*it)->Id());
+            visit(*it, &L, &visited);
         }
+        else {
+            printf("i = %d\n", i);
+            printf("id = %d\n", (*it)->Id());
+            puts("skip");
+        }
+        printf("visited = %d\n", visited);
     }
+
+    /* visit(*it, &L, &visited); */
 }
 
 
-void visit(Vertex *u, std::stack<Vertex*> *s, unsigned int *visited)
+void visit(Vertex *u, std::stack<Vertex*> *s, int *visited)
 {
     //std::list<Vertex*>::iterator it = u->Adjacents().begin();
+    Vertex *vp = nullptr;
+    /*  int grp_size(): */
     u->setD(*visited);
     u->setLow(*visited);
     ++(*visited); //*visited += 1;
+    u->setOnStack(true);
     s->push(u);
 
     for(Vertex *v : u->Adjacents()) {
@@ -82,36 +104,61 @@ void visit(Vertex *u, std::stack<Vertex*> *s, unsigned int *visited)
         }
     }
     if(u->D() == u->Low()){
+        std::vector<Vertex*> scc;
         do {
             /*
              * Adicionar os vertices que eu tiro do stack para um vector
              * em que cada vector é um scc
+             * problema: adicionar cada vertice ao mesmo vector
+             * no fim adicionar esse vector ao vector que guarda todos os SCCs
              */
-            //vx = s->pop();
+            vp = s->top(); //Get the element at the top
+            s->pop(); //because pop doesn't return anything
+            vp->setOnStack(false); //add the vertex to a scc
+            scc.push_back(vp);
         }
-        while(true);
+        while(u->Id() != vp->Id()); //since they hold adresses this should do the right comparisson, otherwise compare the id
+
+        //update the size of the biggest group if we have to
+        printf("scc size =%u\n", scc.size());
+        if(scc.size() > biggest) {
+            biggest = scc.size();
+        }
+        sccs.push_back(scc);
+        printf("sccs size =%u\n", sccs.size());
     }
 }
 
 int main(int argc, char *argv[])
 {
     /* The values for the number of people and the sharing between them  */
-    unsigned int N = 0, P = 0;
-    unsigned int a = 0, b = 0;
+    int N = 0, P = 0;
+    int a = 0, b = 0;
+    /* int a[] = {1, 1, 2, 3, 4, 5, 3}; */
+    /* int b[] = {2, 3, 4, 5, 5, 6, 4}; */
 
-    if(scanf("%u %u", &N, &P) != 2)
+    if(scanf("%d %d", &N, &P) != 2)
         exit(EXIT_FAILURE);
 
-    std::vector<std::list<int>> graph(P); /* Adjacency list */
+    std::vector<Vertex*> graph(N, new Vertex(0, -1, -1));
     for(int i = 0; i < P; ++i) {
-        if(scanf("%u %u", &a, &b) != 2)
+        if(scanf("%d %d", &a, &b) != 2)
             exit(EXIT_FAILURE);
-        else
-            graph[a].push_back(b);
-        //TODO
-        //iterate through the graph and see if the values are the same
+        /* scanf("%d %d", &a, &b); */
+        else {
+            /* graph[a[i]]->setId(a[i]); */
+            graph[a]->setId(a);
+        /* printf("a = %d, Id = %d\n", a[i], graph[a[i]]->Id()); */
+        /* printf("a = %d, Id = %d\n", a, graph[a].Id()); */
+            graph[a]->addAdjacent(graph[b]);
+            /* graph[a[i]]->addAdjacent(graph[b[i]]); */
+        }
     }
+    SCC_Tarjan(&graph);
 
+    groups = sccs.size();
+    own_group_only = groups;
+    printf("%d\n%u\n%d\n", groups, biggest, own_group_only);
     exit(EXIT_SUCCESS);
 }
 
