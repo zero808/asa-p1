@@ -63,7 +63,7 @@ void SCC_Tarjan(std::vector<Vertex*> *graph)
     std::stack<Vertex*> L;
 
     //for(Vertex* v : *graph) { // corrigir
-    printf("size do grafo: %u\n", graph->size());
+    printf("size do grafo: %lu\n", graph->size());
     for(it = graph->begin(); it != graph->end(); ++it) {
         int i = (*it)->D();
         /* if((*it)->D() == UNDEFINED) { */
@@ -86,8 +86,8 @@ void SCC_Tarjan(std::vector<Vertex*> *graph)
 
 void visit(Vertex *u, std::stack<Vertex*> *s, int *visited)
 {
-    //std::list<Vertex*>::iterator it = u->Adjacents().begin();
-    Vertex *vp = nullptr;
+    std::list<Vertex*>::iterator it;
+    Vertex *vp = NULL;
     /*  int grp_size(): */
     u->setD(*visited);
     u->setLow(*visited);
@@ -95,12 +95,12 @@ void visit(Vertex *u, std::stack<Vertex*> *s, int *visited)
     u->setOnStack(true);
     s->push(u);
 
-    for(Vertex *v : u->Adjacents()) {
-        if((v->D() == UNDEFINED) || v->OnStack()) {
-            if(v->D() == UNDEFINED) {
-                visit(v, s, visited);
+    for(it = u->Adjacents().begin(); it != u->Adjacents().end(); ++it) {
+        if(((*it)->D() == UNDEFINED) || (*it)->OnStack()) {
+            if((*it)->D() == UNDEFINED) {
+                visit((*it), s, visited);
             }
-            u->setLow(std::min(u->Low(), v->Low()));
+            u->setLow(std::min(u->Low(), (*it)->Low()));
         }
     }
     if(u->D() == u->Low()){
@@ -120,45 +120,73 @@ void visit(Vertex *u, std::stack<Vertex*> *s, int *visited)
         while(u->Id() != vp->Id()); //since they hold adresses this should do the right comparisson, otherwise compare the id
 
         //update the size of the biggest group if we have to
-        printf("scc size =%u\n", scc.size());
+        printf("scc size =%lu\n", scc.size());
         if(scc.size() > biggest) {
             biggest = scc.size();
         }
         sccs.push_back(scc);
-        printf("sccs size =%u\n", sccs.size());
+        printf("sccs size =%lu\n", sccs.size());
     }
 }
 
+void xpto(std::vector<Vertex*> *v) {
+    std::vector<Vertex*>::iterator it;
+    int i = 0;
+    for(it= v->begin(); it != v->end(); ++it){
+        (*it)->setD(i);
+        (*it)->setLow(i++);
+    }
+}
 int main(int argc, char *argv[])
 {
     /* The values for the number of people and the sharing between them  */
-    int N = 0, P = 0;
-    int a = 0, b = 0;
-    /* int a[] = {1, 1, 2, 3, 4, 5, 3}; */
-    /* int b[] = {2, 3, 4, 5, 5, 6, 4}; */
+    int N = 6, P = 7;
+    //int a = 0, b = 0;
+    int a[] = {1, 1, 2, 3, 4, 5, 3};
+    int b[] = {2, 3, 4, 5, 5, 6, 4};
+    std::vector<Vertex*>::iterator it;
+    std::list<Vertex*>::iterator it2;
 
-    if(scanf("%d %d", &N, &P) != 2)
-        exit(EXIT_FAILURE);
+//    if(scanf("%d %d", &N, &P) != 2)
+ //       exit(EXIT_FAILURE);
 
-    std::vector<Vertex*> graph(N, new Vertex(0, -1, -1));
+    std::vector<Vertex*> graph((N+1), new Vertex(0, -1, -1));
     for(int i = 0; i < P; ++i) {
-        if(scanf("%d %d", &a, &b) != 2)
-            exit(EXIT_FAILURE);
+ //       if(scanf("%d %d", &a, &b) != 2)
+//            exit(EXIT_FAILURE);
         /* scanf("%d %d", &a, &b); */
-        else {
-            /* graph[a[i]]->setId(a[i]); */
-            graph[a]->setId(a);
-        /* printf("a = %d, Id = %d\n", a[i], graph[a[i]]->Id()); */
+        //else {
+            graph[a[i]]->setId(a[i]);
+  //          graph[a]->setId(a);
+        printf("a = %d, Id = %d, d=%d, low = %d\n", a[i], graph[a[i]]->Id(), graph[a[i]]->D(), graph[a[i]]->Low());
         /* printf("a = %d, Id = %d\n", a, graph[a].Id()); */
-            graph[a]->addAdjacent(graph[b]);
-            /* graph[a[i]]->addAdjacent(graph[b[i]]); */
-        }
+            //graph[a]->addAdjacent(graph[b]);
+            graph[a[i]]->addAdjacent(graph[b[i]]);
+        //}
     }
-    SCC_Tarjan(&graph);
-
+    printf("Size do grafo %lu", graph.size());
+    puts("passou o primeiro for");
+    for(it = graph.begin(); it != graph.end(); ++it){
+        for(it2 = (*it)->Adjacents().begin(); it2 != (*it)->Adjacents().end(); ++it2) {
+            unsigned long uls = (*it)->Adjacents().size();
+            printf("Size da lista de adj. %lu", uls);
+            printf("id = %d, ", (*it2)->Id());
+        }
+        puts("");
+    }
+    puts("passou o segundo for");
+    //SCC_Tarjan(&graph);
+    xpto(&graph);
+    puts("passou o xpto");
+    for(int i = 0; i < N; ++i) {
+        printf("a = %d, Id = %d, d=%d, low = %d\n", a[i], graph[a[i]]->Id(), graph[a[i]]->D(), graph[a[i]]->Low());
+    }
+    puts("passou o ultimo for");
+/*
     groups = sccs.size();
     own_group_only = groups;
     printf("%d\n%u\n%d\n", groups, biggest, own_group_only);
+  */
     exit(EXIT_SUCCESS);
 }
 
