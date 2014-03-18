@@ -13,8 +13,8 @@
 class Vertex {
     public:
         Vertex() : id(0), d(UNDEFINED), low(UNDEFINED), onStack(false) {}
-        Vertex( int _id) : id(_id), d(UNDEFINED), low(UNDEFINED), onStack(false) {}
-        Vertex( int _id,  int _d,  int _low) :
+        Vertex(int _id) : id(_id), d(UNDEFINED), low(UNDEFINED), onStack(false) {}
+        Vertex(int _id,  int _d,  int _low) :
             id(_id), d(_d), low(_low), onStack(false) {}
         virtual ~Vertex() {}
 
@@ -88,6 +88,7 @@ void visit(Vertex *u, std::stack<Vertex*> *s, int *visited)
 {
     std::list<Vertex*>::iterator it;
     Vertex *vp = NULL;
+    std::vector<Vertex*> scc;
     /*  int grp_size(): */
     u->setD(*visited);
     u->setLow(*visited);
@@ -104,7 +105,6 @@ void visit(Vertex *u, std::stack<Vertex*> *s, int *visited)
         }
     }
     if(u->D() == u->Low()){
-        std::vector<Vertex*> scc;
         do {
             /*
              * Adicionar os vertices que eu tiro do stack para um vector
@@ -114,8 +114,10 @@ void visit(Vertex *u, std::stack<Vertex*> *s, int *visited)
              */
             vp = s->top(); //Get the element at the top
             s->pop(); //because pop doesn't return anything
-            vp->setOnStack(false); //add the vertex to a scc
-            scc.push_back(vp);
+            if(vp != NULL) {
+                vp->setOnStack(false); //add the vertex to a scc
+                scc.push_back(vp);
+            }
         }
         while(u->Id() != vp->Id()); //since they hold adresses this should do the right comparisson, otherwise compare the id
 
@@ -142,8 +144,8 @@ int main(int argc, char *argv[])
     /* The values for the number of people and the sharing between them  */
     int N = 6, P = 7;
     //int a = 0, b = 0;
-    int a[] = {1, 1, 2, 3, 4, 5, 3};
-    int b[] = {2, 3, 4, 5, 5, 6, 4};
+    int a[] = {1, 2, 3, 4, 5, 6, 3};
+    int b[] = {2, 3, 4, 5, 6, 1, 5};
     std::vector<Vertex*>::iterator it;
     std::list<Vertex*>::iterator it2;
 
@@ -164,13 +166,14 @@ int main(int argc, char *argv[])
             graph[a[i]]->addAdjacent(graph[b[i]]);
         //}
     }
-    printf("Size do grafo %lu", graph.size());
+    printf("Size do grafo %lu\n", graph.size());
     puts("passou o primeiro for");
     for(it = graph.begin(); it != graph.end(); ++it){
+        printf("id exterior = %d\n", (*it)->Id());
         for(it2 = (*it)->Adjacents().begin(); it2 != (*it)->Adjacents().end(); ++it2) {
             unsigned long uls = (*it)->Adjacents().size();
             printf("Size da lista de adj. %lu", uls);
-            printf("id = %d, ", (*it2)->Id());
+            printf("id adjacente = %d, ", (*it2)->Id());
         }
         puts("");
     }
