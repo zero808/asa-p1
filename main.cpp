@@ -124,25 +124,20 @@ void countSharingOutside(std::vector<std::vector<Vertex*> > v) {
     for(std::vector<std::vector<Vertex*> >::iterator itx = v.begin(); itx != v.end(); ++itx) {
         sharesOutside = false;
 
-        //for each vertex that is a member of the SCC *itx points to check
+        //for each vertex that is a member of the SCC *itx points to
         for(std::vector<Vertex*>::iterator ity = itx->begin(); (ity != itx->end())
                 && !sharesOutside; ++ity) {
 
-            if((*ity)->Adjacents()->empty()) {
-                continue;
-            }
-            else {
-                //check if each Vertex has a transition to another vertex that isn't a member of the
-                //same SCC
-                for(std::list<Vertex*>::iterator itz = (*ity)->Adjacents()->begin();
-                        itz != (*ity)->Adjacents()->end(); ++itz) {
-                    if(std::find(itx->begin(), itx->end(), *itz) == itx->end()) {
-                        //if at least one shares with a member of other scc:
-                        //decrement the count and move on to the next SCC
-                        --own_group_only;
-                        sharesOutside = true;
-                        break;
-                    }
+            //check if each Vertex has a transition to another vertex that isn't a member of the
+            //same SCC
+            for(std::list<Vertex*>::iterator itz = (*ity)->Adjacents()->begin();
+                    itz != (*ity)->Adjacents()->end(); ++itz) {
+                if(std::find(itx->begin(), itx->end(), *itz) == itx->end()) {
+                    //if at least one shares with a member of other scc:
+                    //decrement the count and move on to the next SCC
+                    --own_group_only;
+                    sharesOutside = true;
+                    break;
                 }
             }
         }
@@ -161,10 +156,12 @@ int main(int argc, char *argv[])
         exit(EXIT_FAILURE);
 
     std::vector<Vertex*> graph;
-    graph.reserve(N);
+    //We add one more vertex because it's better than doing two subtractions
+    //in order to add transitions to the right vertex
+    graph.reserve(N+1);
 
     //Create the graph's vertices
-    for(int ix = 1; ix <= N; ++ix){
+    for(int ix = 0; ix <= N; ++ix){
         graph.push_back(new Vertex(ix, UNDEFINED, UNDEFINED));
     }
 
@@ -174,14 +171,16 @@ int main(int argc, char *argv[])
         /*      exit(EXIT_FAILURE); */
         //else {
         scanf("%d %d", &a, &b);
-        // we got to subtract 1 because the vector positions start at 0
-        graph[a-1]->addAdjacent(graph[b-1]);
+        // we don't have to subtract 1 because there is an extra element at graph[0]
+        graph[a]->addAdjacent(graph[b]);
     }
 
     SCC_Tarjan(&graph);
-    groups = sccs.size();
-    countSharingOutside(sccs);
-    printf("%d\n%u\n%d\n", groups, biggest, own_group_only);
+    groups = sccs.size(); //the amount of SCCs
+    countSharingOutside(sccs); //the size of the SCC with more elements
+    // we have to decrement groups and own_group_only because of the extra vertex
+    // at graph[0]
+    printf("%d\n%u\n%d\n", --groups, biggest, --own_group_only);
 
     //delete the vertices
     for(it = graph.begin(); it != graph.end(); ++it){
