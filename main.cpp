@@ -12,21 +12,23 @@
 
 class Vertex {
     public:
-        Vertex() : id(0), d(UNDEFINED), low(UNDEFINED), onStack(false) {}
-        Vertex(int _id) : id(_id), d(UNDEFINED), low(UNDEFINED), onStack(false) {}
+        Vertex() : id(0), d(UNDEFINED), low(UNDEFINED), sccId(0), onStack(false) {}
+        Vertex(int _id) : id(_id), d(UNDEFINED), low(UNDEFINED), sccId(0), onStack(false) {}
         Vertex(int _id,  int _d,  int _low) :
-            id(_id), d(_d), low(_low), onStack(false) {}
+            id(_id), d(_d), low(_low), sccId(0), onStack(false) {}
         virtual ~Vertex() { adjacents.clear(); }
 
         int Id() { return id; }
         int D() { return d; }
         int Low() { return low; }
+        int SccId() { return sccId; }
         bool OnStack() { return onStack; }
         std::list<Vertex*> *Adjacents() { return &adjacents; }
 
         void setId( int _id) { id = _id; }
         void setD( int _d) { d = _d; }
         void setLow( int _low) { low = _low; }
+        void setSCCId( int _id) { sccId = _id; }
         void setOnStack(bool b) { onStack = b; }
 
         void addAdjacent(Vertex* v) { adjacents.push_back(v); }
@@ -35,6 +37,8 @@ class Vertex {
         int id;
         int d;
         int low;
+        //the number of the scc;
+        int sccId;
         // To test if this vertex was already added to the stack
         bool onStack;
         //this will work as an adjacency list
@@ -102,6 +106,7 @@ void visit(Vertex *u, std::stack<Vertex*> *s, int *visited)
             s->pop(); //because pop doesn't return anything
             if(vp != NULL) {
                 vp->setOnStack(false); //add the vertex to a scc
+                vp->setSCCId(sccs.size());
                 scc.push_back(vp);
             }
         }
@@ -132,7 +137,8 @@ void countSharingOutside(std::vector<std::vector<Vertex*> > v) {
             //same SCC
             for(std::list<Vertex*>::iterator itz = (*ity)->Adjacents()->begin();
                     itz != (*ity)->Adjacents()->end(); ++itz) {
-                if(std::find(itx->begin(), itx->end(), *itz) == itx->end()) {
+                if((*ity)->SccId() != (*itz)->SccId()) {
+                /* if(std::find(itx->begin(), itx->end(), *itz) == itx->end()) { */
                     //if at least one shares with a member of other scc:
                     //decrement the count and move on to the next SCC
                     --own_group_only;
